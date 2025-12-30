@@ -86,7 +86,7 @@ var zeds = [];
 SplashScene.prototype.add_zed = function() {
 
 	var press_zed_text = new PIXI.extras.BitmapText(
-		"press zed not two",
+		"press ZEE/ZED not two IDIOT",
 		{ font: "20px Numbers", align: "center"}
 	);
 	press_zed_text.position.set(Math.random() * 520 - 40, Math.random() * 420 + 30);
