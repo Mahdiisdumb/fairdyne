@@ -27,7 +27,7 @@ function Menu() {
 	this.easy_mode_enabled = true;
 
 	this.normal_text_text = "HAVE MERCY I WANT TO BE YOUR FRIEND";
-	this.hard_text_text = "I WANT TO KILL YOU BUT I SPARED YOUR FREIND PAPYRUS";
+	this.hard_text_text = "I WANT TO KILL YOU IDIOT";
 	this.genocide_text_text = "IM GONNA KILL ALL THE MONSTERS";
 
 	gameplay_stage.addChild(this.select_text);
