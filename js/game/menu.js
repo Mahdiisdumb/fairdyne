@@ -26,9 +26,9 @@ function Menu() {
 
 	this.easy_mode_enabled = true;
 
-	this.normal_text_text = "I want to PET THE VEGETABLES";
-	this.hard_text_text = "I want to FIGHT THE TRUE HERO";
-	this.genocide_text_text = "I want to ATONE FOR MY SINS";
+	this.normal_text_text = "HAVE MERCY I WANT TO BE YOUR FRIEND";
+	this.hard_text_text = "I WANT TO KILL YOU BUT I SPARED YOUR FREIND PAPYRUS";
+	this.genocide_text_text = "IM GONNA KILL ALL THE MONSTERS";
 
 	gameplay_stage.addChild(this.select_text);
 	gameplay_stage.addChild(this.normal_text);
