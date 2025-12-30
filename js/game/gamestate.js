@@ -152,6 +152,9 @@ GameState.prototype.restartGame = function(difficulty) {
 	heart.sprite.visible = true;
 	heart.shield_sprite.visible = true;
 
+	// Initialize heart as green and create shield area
+	heart.setGreen();
+
 	switch (difficulty) {
 		case "normal":
 		case "hard":
@@ -185,6 +188,12 @@ GameState.prototype.endGame = function() {
 	if (box.top < 240 - SHIELD_DISTANCE) box.top = 240 - SHIELD_DISTANCE;
 
 	heart.shield_sprite.visible = false;
+	
+	// Hide shield area on game over
+	if (heart.shield_area) {
+		heart.shield_area.visible = false;
+	}
+	
 	undyne.opacity_g.alpha = 0;
 	this.state = "gameover";
 
@@ -406,6 +415,133 @@ GameState.prototype.update = function(delta_ms) {
 }
 
 
+// ===== HEART EXTENSIONS FOR SHIELD BLOCK & GREEN MODE =====
+
+// Extend Heart prototype with shield block functionality
+if (typeof Heart !== 'undefined') {
+	
+	// Store original shield texture
+	Heart.prototype.originalShieldTexture = null;
+	Heart.prototype.blockTimer = 0;
+	
+	// Method to trigger shield block visual effect
+	Heart.prototype.blockSpear = function() {
+		// Store original texture if not already stored
+		if (!this.originalShieldTexture && this.shield_sprite.texture) {
+			this.originalShieldTexture = this.shield_sprite.texture;
+		}
+		
+		// Change to block texture
+		this.shield_sprite.texture = PIXI.Texture.from('shield_block.png');
+		
+		// Set timer for 500ms
+		this.blockTimer = 500;
+	};
+	
+	// Set heart to green mode with shield area
+	Heart.prototype.setGreen = function() {
+		this.isGreen = true;
+		
+		// Create shield area graphic if it doesn't exist
+		if (!this.shield_area) {
+			this.shield_area = new PIXI.Graphics();
+			this.shield_area.lineStyle(2, 0x00FF00, 0.8);
+			this.shield_area.drawCircle(0, 0, SHIELD_DISTANCE);
+			this.shield_area.alpha = 0.6;
+			
+			// Add to gameplay stage
+			if (typeof gameplay_stage !== 'undefined') {
+				gameplay_stage.addChild(this.shield_area);
+			}
+		}
+		
+		this.shield_area.visible = true;
+		
+		// Position shield area at heart location
+		if (this.sprite) {
+			this.shield_area.position.set(this.sprite.position.x, this.sprite.position.y);
+		}
+	};
+	
+	// Set heart to normal (red) mode
+	Heart.prototype.setRed = function() {
+		this.isGreen = false;
+		
+		if (this.shield_area) {
+			this.shield_area.visible = false;
+		}
+	};
+	
+	// Store original update function
+	var originalHeartUpdate = Heart.prototype.update;
+	
+	// Override update to handle shield block timer and green mode
+	Heart.prototype.update = function(delta_ms) {
+		// Call original update
+		if (originalHeartUpdate) {
+			originalHeartUpdate.call(this, delta_ms);
+		}
+		
+		// Handle shield block timer
+		if (this.blockTimer > 0) {
+			this.blockTimer -= delta_ms;
+			
+			// Reset to original shield texture when timer expires
+			if (this.blockTimer <= 0) {
+				this.blockTimer = 0;
+				if (this.originalShieldTexture) {
+					this.shield_sprite.texture = this.originalShieldTexture;
+				} else {
+					// Fallback to default shield texture
+					this.shield_sprite.texture = PIXI.Texture.from('shield.png');
+				}
+			}
+		}
+		
+		// Update shield area position if in green mode
+		if (this.isGreen && this.shield_area && this.sprite) {
+			this.shield_area.position.set(this.sprite.position.x, this.sprite.position.y);
+		}
+	};
+}
+
+// ===== SPEAR COLLISION DETECTION HELPER =====
+
+// Helper function to check if spear was blocked
+// This should be called in your spear collision detection
+function checkSpearBlock(spear, heart) {
+	// Calculate distance from heart to spear
+	var dx = spear.sprite.position.x - heart.sprite.position.x;
+	var dy = spear.sprite.position.y - heart.sprite.position.y;
+	var distance = Math.sqrt(dx * dx + dy * dy);
+	
+	// Check if spear is within shield distance
+	if (distance <= SHIELD_DISTANCE) {
+		// Calculate angle of spear relative to heart
+		var angle = Math.atan2(dy, dx);
+		
+		// Normalize shield direction (1=down, 2=left, 3=up, 4=right)
+		var shieldAngle;
+		switch(heart.shield_dir) {
+			case 1: shieldAngle = Math.PI / 2; break;  // down
+			case 2: shieldAngle = Math.PI; break;      // left
+			case 3: shieldAngle = -Math.PI / 2; break; // up
+			case 4: shieldAngle = 0; break;            // right
+		}
+		
+		// Check if spear angle is within shield coverage (~90 degrees)
+		var angleDiff = Math.abs(angle - shieldAngle);
+		if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+		
+		if (angleDiff < Math.PI / 3) { // ~60 degree coverage
+			// Spear was blocked!
+			heart.blockSpear();
+			return true;
+		}
+	}
+	
+	return false;
+}
 
 
 var gamestate;
